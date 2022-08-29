@@ -4,18 +4,19 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"io/ioutil"
 )
 
 type httpObj struct {
 	dbg bool
 	baseUri string
+	idxPath string
 }
 
 func initHttp()(sObj *httpObj) {
 
 	sObj = new(httpObj)
 	sObj.dbg = false
-
 	return sObj
 }
 
@@ -41,15 +42,33 @@ func (sObj *httpObj) handle(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		p := r.RequestURI
 		if p == "/" {
-			p = "/home/peter/www/azul/html/index.html"
+			p = sObj.idxPath
 		}
+
+		extPos:=-1
+		for i:=len(p)-1; i>=0; i-- {
+			if p[i] == '.' {
+				extPos = i
+			}
+		}
+
+		if extPos == -1 {p += ".html"}
+		if p[:6] != "/home/" {
+			p= sObj.baseUri + "/html" + p
+		}
+
 		fmt.Printf("\n*** serving %s ***\n",p)
     	http.ServeFile(w, r, p)
 		return
 	}
 
 	if r.Method == "POST" {
-		fmt.Printf("\n*** received post ***\n")
+
+		reqBody, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			fmt.Printf("error reading reqbody: %v", err)
+		}
+		fmt.Printf("%s\n", reqBody)
 		return
 	}
 
@@ -93,7 +112,12 @@ func main() {
 		os.Exit(-1)
 	}
 
-	fmt.Printf("Uri is %s\n", serveUri)
+
+	sObj.baseUri = serveUri
+	sObj.idxPath = serveUri + "/html/index.html"
+
+	fmt.Printf("Uri is %s\nIndex File is %s\n", sObj.baseUri, sObj.idxPath)
+
 	// Create a server on port 8000
 	// Exactly how you would run an HTTP/1.1 server
 	srv := &http.Server{Addr: "127.0.0.1:8002", Handler: http.HandlerFunc(sObj.handle)}
