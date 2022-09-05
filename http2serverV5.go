@@ -1,5 +1,12 @@
-
-// ver 5 add js css
+// http2serverV5.go
+// program that creates the directory structure for a domain
+//
+// author: prr, azul software
+// date: 5 Septtember 2022
+// copyright 2022 prr, azul software
+//
+// ver 5 add js css routes
+//
 
 package main
 
