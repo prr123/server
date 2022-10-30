@@ -122,15 +122,15 @@ func (sObj *httpObj) handle(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if extPos == -1 {
-			p += ".html"
 			extPos = len(p)
+			p += ".html"
 		}
 
 		sFil:=""
 //		fileJs:=false
 		ext := string(p[extPos+1:])
 		cmdStr := string(p[:extPos])
-//	fmt.Printf("\nfile: %s ext: %s\n", foldNam,ext)
+		if sObj.dbg {fmt.Printf("\nfile: %s cmd: %s ext: %s\n",p ,cmdStr, ext)}
 
 		switch ext {
 			case "html":
@@ -224,11 +224,11 @@ func main() {
 	port := 8002
 
 	if numArgs < 3 {
-		fmt.Println ("usage is:\n server \\site=[azultest] \\port=[8002]\n      --help\n")
+		fmt.Println ("usage is:\n server [site] \\port=[8002] (\\dbg)\n      --help\n")
 		os.Exit(-1)
 	}
 
-    flags := []string{"port"}
+    flags := []string{"port", "dbg"}
 
     cliMap, err := util.ParseFlags(os.Args, flags)
     if err !=nil {
@@ -238,23 +238,29 @@ func main() {
 
 	if numArgs > 1 {
 		if os.Args[1] == "--help" {
-			fmt.Println ("usage is:\n server \\site=[azultest] \\port=[8002]\n      --help\n")
+			fmt.Println ("usage is:\n server [site] \\port=[8002] (\\dbg)\n      --help\n")
 			os.Exit(1)
 		}
 	}
 
     portStr, ok := cliMap["port"].(string)
     if !ok {
-		fmt.Printf("port needs an integer!\n")
+		fmt.Printf("port needs to be specifies!\n")
 		os.Exit(-1)
 	}
     port, err = strconv.Atoi(portStr)
     if err != nil {
-    	fmt.Printf("port attribute is not an integer! %s\n", portStr)
+    	fmt.Printf("port attribute needs an integer! %s\n", portStr)
 		os.Exit(-1)
 	}
 
 	siteStr := os.Args[1]
+
+    _, ok = cliMap["dbg"]
+    if ok {
+		sObj.dbg = true
+	}
+
 //    fmt.Printf("cliMap: %v!\n", cliMap)
 
 	serveUri = baseUri + siteStr
@@ -273,12 +279,11 @@ func main() {
 
 	servAddr := fmt.Sprintf("127.0.0.1:%d",port)
 	srv := &http.Server{Addr: servAddr, Handler: http.HandlerFunc(sObj.handle)}
-//	srv := &http.Server{Addr: "127.0.0.1:8002", Handler: http.HandlerFunc(sObj.handle)}
 
 	// Start the server with TLS, since we are running HTTP/2 it must be
 	// run with TLS.
 	// Exactly how you would run an HTTP/1.1 server with TLS connection.
-	fmt.Printf("Serving localhost on https: %s\n", servAddr)
+	fmt.Printf("Serving localhost on https: %s mode dbg: %t\n", servAddr, sObj.dbg)
 
 	err = srv.ListenAndServeTLS("/home/peter/newca/server_crt.pem", "/home/peter/newca/server_key.pem")
 	if err != nil {
