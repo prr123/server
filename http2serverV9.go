@@ -245,7 +245,7 @@ func main() {
 
     portStr, ok := cliMap["port"].(string)
     if !ok {
-		fmt.Printf("port needs to be specifies!\n")
+		fmt.Printf("port needs to be specified!\n")
 		os.Exit(-1)
 	}
     port, err = strconv.Atoi(portStr)
